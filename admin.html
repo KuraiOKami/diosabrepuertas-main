@@ -50,9 +50,10 @@
     td{padding:.8rem 1rem;border-bottom:1px solid var(--border);vertical-align:top}
     tr:last-child td{border-bottom:none}
     tr:hover td{background:rgba(179,132,51,.04)}
+    .address-cell{min-width:200px;font-size:.8rem;line-height:1.4}
     .badge{display:inline-block;padding:.2rem .6rem;border-radius:var(--radius-full);font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em}
-    .badge-pending{background:rgba(179,132,51,.12);color:var(--gold-dark)}
-    .badge-paid{background:rgba(67,122,34,.12);color:#2e5c10}
+    .badge-paypal{background:rgba(0,90,179,.1);color:#005ab3}
+    .badge-zelle{background:rgba(99,50,168,.1);color:#6332a8}
     .empty-state{text-align:center;padding:3rem 2rem;color:var(--muted)}
     .empty-state h3{font-size:1.2rem;margin-bottom:.5rem;color:var(--text)}
     .note-box{background:rgba(179,132,51,.08);border:1px solid rgba(179,132,51,.2);border-radius:var(--radius-md);padding:1rem 1.25rem;font-size:.85rem;color:var(--gold-dark);margin-top:1.5rem;line-height:1.5}
@@ -87,11 +88,11 @@
     </div>
     <div class="dash-body">
       <div class="stats" id="stats"></div>
-      <input class="search-bar" type="search" id="search" placeholder="Buscar por nombre, correo o país…" oninput="renderTable()" />
+      <input class="search-bar" type="search" id="search" placeholder="Buscar por nombre, correo, ciudad o país…" oninput="renderTable()" />
       <div class="table-wrap" id="table-wrap"></div>
       <div class="note-box">
         <strong>¿Cómo funciona esto?</strong>
-        Esta página muestra las personas que llenaron el formulario de preventa. Para ver quién ya pagó, cruza estos datos con los reportes de tu cuenta de PayPal. Puedes exportar la lista como CSV y comparar correos electrónicos. Esta página está protegida por contraseña y no aparece en buscadores.
+        Esta página muestra las personas que llenaron el formulario de preventa con su información de entrega. Para ver quién ya pagó, cruza estos datos con los reportes de tu cuenta de PayPal o los recibos de Zelle. Puedes exportar la lista como CSV. Esta página está protegida por contraseña y no aparece en buscadores.
       </div>
     </div>
   </div>
@@ -121,20 +122,37 @@
     // ============================================================
     // LOAD SUBMISSIONS via Netlify Forms API
     // ============================================================
-    // NOTE: This requires a Netlify API token stored as an env var
-    // or you can just view submissions directly in the Netlify dashboard.
-    // For now the page shows a demo table so layout is visible.
+    // NOTE: For a static site the simplest approach is to read directly from the
+    // Netlify dashboard, or use Netlify Identity + Functions for a real API call.
+    // ---- DEMO DATA so owner can see the layout immediately ----
     let allRows = [];
 
     async function loadSubmissions(){
-      // Try Netlify Forms API (requires NETLIFY_API_TOKEN + SITE_ID injected at build)
-      // For a static site the simplest approach is to read directly from Netlify dashboard
-      // or use Netlify's Identity + Functions for a real API call.
-      // ---- DEMO DATA so owner can see the layout immediately ----
       allRows = [
-        { created_at: new Date().toISOString(), data: { nombre:'María González', email:'maria@email.com', telefono:'+1 787 555 0101', pais:'Puerto Rico', cantidad:'1' } },
-        { created_at: new Date().toISOString(), data: { nombre:'Ana Torres', email:'ana@email.com', telefono:'+1 939 555 0202', pais:'Estados Unidos', cantidad:'2' } },
-        { created_at: new Date().toISOString(), data: { nombre:'Carmen Díaz', email:'carmen@email.com', telefono:'', pais:'México', cantidad:'1' } },
+        {
+          created_at: new Date().toISOString(),
+          data: {
+            nombre: 'María González', email: 'maria@email.com', telefono: '+1 787 555 0101',
+            pais: 'Puerto Rico', direccion: 'Calle Luna 45', ciudad: 'San Juan',
+            estado: 'PR', codigo_postal: '00901', cantidad: '1', metodo_pago: 'paypal'
+          }
+        },
+        {
+          created_at: new Date().toISOString(),
+          data: {
+            nombre: 'Ana Torres', email: 'ana@email.com', telefono: '+1 939 555 0202',
+            pais: 'Estados Unidos', direccion: '123 Main St Apt 4B', ciudad: 'Orlando',
+            estado: 'FL', codigo_postal: '32801', cantidad: '2', metodo_pago: 'zelle'
+          }
+        },
+        {
+          created_at: new Date().toISOString(),
+          data: {
+            nombre: 'Carmen Díaz', email: 'carmen@email.com', telefono: '',
+            pais: 'México', direccion: 'Av. Reforma 200', ciudad: 'Ciudad de México',
+            estado: 'CDMX', codigo_postal: '06600', cantidad: '1', metodo_pago: 'paypal'
+          }
+        },
       ];
       renderStats();
       renderTable();
@@ -144,35 +162,65 @@
       const total = allRows.length;
       const totalBooks = allRows.reduce((s,r)=>{ const n=parseInt(r.data.cantidad)||1; return s+n; },0);
       const revenue = (totalBooks * 24.99).toFixed(2);
+      const paypalCount = allRows.filter(r => r.data.metodo_pago === 'paypal').length;
+      const zelleCount = allRows.filter(r => r.data.metodo_pago === 'zelle').length;
       document.getElementById('stats').innerHTML = `
         <div class="stat-card"><div class="num">${total}</div><div class="lbl">Reservas</div></div>
         <div class="stat-card"><div class="num">${totalBooks}</div><div class="lbl">Libros</div></div>
         <div class="stat-card"><div class="num">$${revenue}</div><div class="lbl">Total esperado</div></div>
+        <div class="stat-card"><div class="num">${paypalCount}</div><div class="lbl">PayPal</div></div>
+        <div class="stat-card"><div class="num">${zelleCount}</div><div class="lbl">Zelle</div></div>
       `;
     }
 
     function renderTable(){
       const q = document.getElementById('search').value.toLowerCase();
       const rows = allRows.filter(r=>{
-        const d=r.data; return !q||(d.nombre||'').toLowerCase().includes(q)||(d.email||'').toLowerCase().includes(q)||(d.pais||'').toLowerCase().includes(q);
+        const d = r.data;
+        return !q
+          || (d.nombre||'').toLowerCase().includes(q)
+          || (d.email||'').toLowerCase().includes(q)
+          || (d.pais||'').toLowerCase().includes(q)
+          || (d.ciudad||'').toLowerCase().includes(q)
+          || (d.direccion||'').toLowerCase().includes(q);
       });
       const wrap = document.getElementById('table-wrap');
-      if(!rows.length){ wrap.innerHTML='<div class="empty-state"><h3>No hay resultados</h3><p>No se encontraron reservas con ese criterio.</p></div>'; return; }
-      wrap.innerHTML=`<table>
+      if(!rows.length){
+        wrap.innerHTML='<div class="empty-state"><h3>No hay resultados</h3><p>No se encontraron reservas con ese criterio.</p></div>';
+        return;
+      }
+      wrap.innerHTML = `<table>
         <thead><tr>
-          <th>#</th><th>Nombre</th><th>Correo</th><th>Teléfono</th><th>País</th><th>Libros</th><th>Total</th><th>Fecha</th>
+          <th>#</th>
+          <th>Nombre</th>
+          <th>Correo</th>
+          <th>Teléfono</th>
+          <th>Dirección de entrega</th>
+          <th>País</th>
+          <th>Libros</th>
+          <th>Total</th>
+          <th>Pago</th>
+          <th>Fecha</th>
         </tr></thead>
         <tbody>${rows.map((r,i)=>{
-          const d=r.data; const n=parseInt(d.cantidad)||1; const tot=(n*24.99).toFixed(2);
-          const date=new Date(r.created_at).toLocaleDateString('es-PR',{day:'2-digit',month:'short',year:'numeric'});
+          const d = r.data;
+          const n = parseInt(d.cantidad) || 1;
+          const tot = (n * 24.99).toFixed(2);
+          const date = new Date(r.created_at).toLocaleDateString('es-PR', {day:'2-digit', month:'short', year:'numeric'});
+          const fullAddress = [d.direccion, d.ciudad, d.estado, d.codigo_postal].filter(Boolean).join(', ');
+          const metodoBadge = d.metodo_pago === 'zelle'
+            ? '<span class="badge badge-zelle">Zelle</span>'
+            : '<span class="badge badge-paypal">PayPal</span>';
           return `<tr>
             <td>${i+1}</td>
             <td>${esc(d.nombre||'—')}</td>
             <td><a href="mailto:${esc(d.email||'')}">${esc(d.email||'—')}</a></td>
             <td>${esc(d.telefono||'—')}</td>
+            <td class="address-cell">${esc(fullAddress||'—')}</td>
             <td>${esc(d.pais||'—')}</td>
             <td>${n}</td>
             <td>$${tot}</td>
+            <td>${metodoBadge}</td>
             <td>${date}</td>
           </tr>`;
         }).join('')}</tbody>
@@ -182,13 +230,23 @@
     function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
     function exportCSV(){
-      const headers = ['Nombre','Correo','Teléfono','País','Libros','Total','Fecha'];
+      const headers = ['Nombre','Correo','Teléfono','Dirección','Ciudad','Estado','Código Postal','País','Libros','Total','Método de Pago','Fecha'];
       const rows = allRows.map(r=>{
-        const d=r.data; const n=parseInt(d.cantidad)||1;
-        return [d.nombre,d.email,d.telefono,d.pais,n,(n*24.99).toFixed(2),new Date(r.created_at).toLocaleDateString('es-PR')].map(v=>`"${String(v||'').replace(/"/g,'""')}"`).join(',');
+        const d = r.data;
+        const n = parseInt(d.cantidad) || 1;
+        return [
+          d.nombre, d.email, d.telefono,
+          d.direccion, d.ciudad, d.estado, d.codigo_postal,
+          d.pais, n, (n * 24.99).toFixed(2),
+          d.metodo_pago || 'paypal',
+          new Date(r.created_at).toLocaleDateString('es-PR')
+        ].map(v => `"${String(v||'').replace(/"/g,'""')}"`).join(',');
       });
-      const csv='\uFEFF'+[headers.join(','),...rows].join('\n');
-      const a=document.createElement('a'); a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv); a.download='preventa-reservas.csv'; a.click();
+      const csv = '﻿' + [headers.join(','), ...rows].join('\n');
+      const a = document.createElement('a');
+      a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+      a.download = 'preventa-reservas.csv';
+      a.click();
     }
   </script>
 </body>
