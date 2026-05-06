@@ -31,8 +31,42 @@
     }
     *{box-sizing:border-box;margin:0;padding:0}
     html{scroll-behavior:smooth}
-    body{min-height:100dvh;font-family:var(--font-body);font-size:var(--text-base);line-height:1.6;color:var(--text);background:radial-gradient(ellipse 90% 60% at 0% 0%,rgba(179,132,51,.22) 0%,transparent 50%),radial-gradient(ellipse 70% 55% at 100% 15%,rgba(130,75,25,.13) 0%,transparent 45%),radial-gradient(ellipse 55% 45% at 30% 100%,rgba(200,148,72,.12) 0%,transparent 45%),linear-gradient(165deg,#fdfaf3 0%,#f8edd8 28%,#f0e1c8 58%,#e7d3b2 100%)}
-    body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E");opacity:.022;pointer-events:none;z-index:0}
+
+    /* Book cover full-page background */
+    body{
+      min-height:100dvh;
+      font-family:var(--font-body);
+      font-size:var(--text-base);
+      line-height:1.6;
+      color:var(--text);
+      position:relative;
+    }
+    /* Book cover background layer */
+    body::after{
+      content:'';
+      position:fixed;
+      inset:0;
+      background-image:url('./assets/book.jpg');
+      background-size:cover;
+      background-position:center top;
+      background-repeat:no-repeat;
+      opacity:0.085;
+      z-index:0;
+      pointer-events:none;
+    }
+    /* Warm gradient over the book bg */
+    body::before{
+      content:'';
+      position:fixed;
+      inset:0;
+      background:
+        radial-gradient(ellipse 90% 60% at 0% 0%,rgba(179,132,51,.22) 0%,transparent 50%),
+        radial-gradient(ellipse 70% 55% at 100% 15%,rgba(130,75,25,.13) 0%,transparent 45%),
+        radial-gradient(ellipse 55% 45% at 30% 100%,rgba(200,148,72,.12) 0%,transparent 45%),
+        linear-gradient(165deg,#fdfaf3 0%,#f8edd8 28%,#f0e1c8 58%,#e7d3b2 100%);
+      z-index:0;
+      pointer-events:none;
+    }
     body>*{position:relative;z-index:1}
     img{display:block;max-width:100%;height:auto}
     .skip-link{position:absolute;left:-999px;top:var(--space-2);background:var(--dark);color:var(--inverse);padding:var(--space-3) var(--space-4);border-radius:var(--radius-full);font-size:var(--text-sm)}
@@ -87,7 +121,7 @@
     .payment-opt:hover{border-color:var(--gold);background:rgba(179,132,51,.04)}
     .payment-opt input[type="radio"]{position:absolute;opacity:0;width:0;height:0}
     .payment-opt.selected{border-color:var(--gold);background:rgba(179,132,51,.07)}
-    .payment-opt .opt-icon{font-size:1.6rem;line-height:1}
+    .payment-opt .opt-logo{height:28px;width:auto;object-fit:contain;display:block}
     .payment-opt .opt-name{font-size:var(--text-sm);font-weight:700;color:var(--text)}
     .payment-opt .opt-desc{font-size:var(--text-xs);color:var(--muted);text-align:center}
     .payment-label{font-size:var(--text-xs);font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:var(--space-3);display:block}
@@ -184,12 +218,20 @@
             <input type="hidden" name="form-name" value="preventa" />
             <p style="display:none"><label>No llenes esto: <input name="bot-field" /></label></p>
 
-            <!-- Name + Email -->
+            <!-- First Name + Middle Name -->
             <div class="form-row form-two">
               <div>
-                <label for="nombre">Nombre completo *</label>
-                <input type="text" id="nombre" name="nombre" placeholder="Tu nombre" required autocomplete="name" />
+                <label for="nombre">Nombre *</label>
+                <input type="text" id="nombre" name="nombre" placeholder="Tu nombre" required autocomplete="given-name" />
               </div>
+              <div>
+                <label for="segundo_nombre">Segundo nombre / Apellido</label>
+                <input type="text" id="segundo_nombre" name="segundo_nombre" placeholder="Jennifer Robles" autocomplete="family-name" />
+              </div>
+            </div>
+
+            <!-- Email -->
+            <div class="form-row">
               <div>
                 <label for="email">Correo electrónico *</label>
                 <input type="email" id="email" name="email" placeholder="correo@ejemplo.com" required autocomplete="email" />
@@ -281,13 +323,29 @@
             <div class="payment-options" role="group" aria-label="Método de pago">
               <label class="payment-opt selected" id="opt-paypal">
                 <input type="radio" name="metodo_pago" value="paypal" checked />
-                <span class="opt-icon">💳</span>
+                <!-- PayPal logo via Simple Icons CDN -->
+                <img
+                  src="https://cdn.simpleicons.org/paypal/003087"
+                  alt="PayPal"
+                  class="opt-logo"
+                  width="80"
+                  height="28"
+                  loading="lazy"
+                />
                 <span class="opt-name">PayPal</span>
                 <span class="opt-desc">Pago seguro en línea</span>
               </label>
               <label class="payment-opt" id="opt-zelle">
                 <input type="radio" name="metodo_pago" value="zelle" />
-                <span class="opt-icon">⚡</span>
+                <!-- Zelle logo via Simple Icons CDN -->
+                <img
+                  src="https://cdn.simpleicons.org/zelle/6D1ED4"
+                  alt="Zelle"
+                  class="opt-logo"
+                  width="68"
+                  height="28"
+                  loading="lazy"
+                />
                 <span class="opt-name">Zelle</span>
                 <span class="opt-desc">Transferencia directa</span>
               </label>
@@ -336,8 +394,8 @@
       </article>
       <article class="detail-card">
         <div class="icon" aria-hidden="true">✒️</div>
-        <h3>Primeras 25 firmadas</h3>
-        <p>Las primeras 25 órdenes reciben su copia firmada a mano por Jennifer Robles con bolígrafo exclusivo.</p>
+        <h3>Libro firmado</h3>
+        <p>Tu copia viene firmada a mano por <strong>Jennifer Robles</strong> con bolígrafo exclusivo del libro.</p>
       </article>
       <article class="detail-card">
         <div class="icon" aria-hidden="true">⏳</div>
@@ -354,7 +412,7 @@
     <!-- QUOTE -->
     <section class="container quote" aria-label="Cita del libro">
       <p>"Recibirás la fe que te levantará y te dará la victoria en medio de tu tormenta."</p>
-      <cite>— Jennifer Robles, Mami, abrázame</cite>
+      <cite>— <strong>Jennifer Robles</strong>, Mami, abrázame</cite>
     </section>
 
     <!-- ABOUT THE AUTHOR -->
@@ -365,7 +423,7 @@
         </div>
         <div class="about-copy">
           <span class="eyebrow">Sobre la autora</span>
-          <h2 id="sobre-autora">Jennifer Robles</h2>
+          <h2 id="sobre-autora"><strong>Jennifer Robles</strong></h2>
           <hr class="about-divider" />
           <p>Jennifer Robles es una mujer de fe cuya vida ha sido moldeada en los procesos, sostenida en la prueba y restaurada por el poder de Dios. Su historia no es perfecta, pero sí es real: una historia donde el dolor, la incertidumbre y las batallas como madre se convirtieron en el escenario donde Dios mostró Su fidelidad.</p>
           <p>Con valentía, transparencia y un corazón rendido, Jennifer abre su vida para compartir un mensaje que nace desde lo más profundo: ninguna madre está sola en su lucha. Su testimonio es una voz de esperanza para aquellas que, en medio de la desesperación, siguen creyendo por el propósito de Dios en la vida de sus hijos.</p>
