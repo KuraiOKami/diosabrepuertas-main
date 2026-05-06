@@ -275,7 +275,7 @@
               </div>
               <div>
                 <label for="estado">Estado / Provincia *</label>
-                <input type="text" id="estado" name="estado" placeholder="Estado" required autocomplete="address-level1" />
+                <input type="text" id="estado" name="estado" placeholder="FL, NY, TX…" required autocomplete="address-level1" />
               </div>
               <div>
                 <label for="codigo_postal">Código postal *</label>
@@ -450,12 +450,27 @@
     const BOOK_PRICES = { '1': 14.99, '2': 25.00, '3': 44.97, '4+': 59.96 };
     const SHIPPING_US = 8, SHIPPING_INTL = 15;
     const US_COUNTRIES = ['Puerto Rico', 'Estados Unidos'];
-    // Tax rates by country (applied to book price only)
-    const TAX_RATES = { 'Puerto Rico': 0.115 }; // 11.5% IVU
+
+    // US state sales tax rates (state-level; applied to book price)
+    const US_STATE_TAX = {
+      AL:0.04,  AK:0,     AZ:0.056, AR:0.065, CA:0.0725, CO:0.029, CT:0.0635,
+      DE:0,     FL:0.06,  GA:0.04,  HI:0.04,  ID:0.06,   IL:0.0625,IN:0.07,
+      IA:0.06,  KS:0.065, KY:0.06,  LA:0.0445,ME:0.055,  MD:0.06,  MA:0.0625,
+      MI:0.06,  MN:0.06875,MS:0.07, MO:0.04225,MT:0,     NE:0.055, NV:0.0685,
+      NH:0,     NJ:0.06625,NM:0.05, NY:0.04,  NC:0.0475, ND:0.05,  OH:0.0575,
+      OK:0.045, OR:0,     PA:0.06,  RI:0.07,  SC:0.06,   SD:0.045, TN:0.07,
+      TX:0.0625,UT:0.0485,VT:0.06,  VA:0.053, WA:0.065,  WV:0.06,  WI:0.05,
+      WY:0.04,  DC:0.06,  PR:0.115
+    };
+
+    // Latin America: flat 11.5% (same as PR IVU)
+    const LATAM_COUNTRIES = ['México','Colombia','Venezuela','República Dominicana','Otro'];
+    const LATAM_TAX = 0.115;
 
     const form = document.getElementById('preorder-form');
     const cantidadEl = document.getElementById('cantidad');
     const paisEl = document.getElementById('pais');
+    const estadoEl = document.getElementById('estado');
     const submitBtn = document.getElementById('submit-btn');
     const paymentHint = document.getElementById('payment-hint');
     const optPaypal = document.getElementById('opt-paypal');
@@ -468,10 +483,19 @@
       return US_COUNTRIES.includes(paisEl.value) ? SHIPPING_US : SHIPPING_INTL;
     }
 
-    function getTax() {
-      const rate = TAX_RATES[paisEl.value] ?? 0;
-      return getBookPrice() * rate;
+    function getTaxRate() {
+      const country = paisEl.value;
+      if (!country) return 0;
+      if (country === 'Puerto Rico') return 0.115;
+      if (LATAM_COUNTRIES.includes(country)) return LATAM_TAX;
+      if (country === 'Estados Unidos') {
+        const abbr = (estadoEl?.value || '').trim().toUpperCase().slice(0, 2);
+        return US_STATE_TAX[abbr] ?? 0;
+      }
+      return 0;
     }
+
+    function getTax() { return getBookPrice() * getTaxRate(); }
 
     function getGrandTotal() {
       return getBookPrice() + (getShipping() ?? 0) + getTax();
@@ -503,22 +527,34 @@
       // Tax
       const taxEl = document.getElementById('tax-price');
       const taxLabel = document.getElementById('tax-label');
+      const taxRate = getTaxRate();
       if (!country) {
         taxLabel.textContent = 'Impuestos';
         taxEl.textContent = '—';
         taxEl.style.cssText = 'color:var(--muted)';
-      } else if (TAX_RATES[country]) {
-        taxLabel.textContent = `IVU ${(TAX_RATES[country] * 100).toFixed(1)}%`;
+      } else if (country === 'Puerto Rico') {
+        taxLabel.textContent = 'IVU 11.5% (PR)';
+        taxEl.textContent = '$' + tax.toFixed(2);
+        taxEl.style.cssText = 'color:var(--text)';
+      } else if (LATAM_COUNTRIES.includes(country)) {
+        taxLabel.textContent = 'Impuesto estimado 11.5%';
         taxEl.textContent = '$' + tax.toFixed(2);
         taxEl.style.cssText = 'color:var(--text)';
       } else if (country === 'Estados Unidos') {
-        taxLabel.textContent = 'Impuestos';
-        taxEl.textContent = 'Varía por estado';
-        taxEl.style.cssText = 'color:var(--muted);font-style:italic;font-size:.78rem';
-      } else {
-        taxLabel.textContent = 'Impuestos';
-        taxEl.textContent = 'No aplica';
-        taxEl.style.cssText = 'color:var(--muted)';
+        const abbr = (estadoEl?.value || '').trim().toUpperCase().slice(0, 2);
+        if (!abbr || !US_STATE_TAX.hasOwnProperty(abbr)) {
+          taxLabel.textContent = 'Impuestos';
+          taxEl.textContent = 'Ingresa tu estado (ej: FL)';
+          taxEl.style.cssText = 'color:var(--muted);font-style:italic;font-size:.78rem';
+        } else if (taxRate === 0) {
+          taxLabel.textContent = `Impuestos (${abbr})`;
+          taxEl.textContent = 'No aplica';
+          taxEl.style.cssText = 'color:var(--muted)';
+        } else {
+          taxLabel.textContent = `Est. impuesto ${abbr} ${(taxRate * 100).toFixed(2)}%`;
+          taxEl.textContent = '$' + tax.toFixed(2);
+          taxEl.style.cssText = 'color:var(--text)';
+        }
       }
 
       // Grand total
@@ -545,6 +581,7 @@
 
     cantidadEl.addEventListener('change', updateUI);
     paisEl.addEventListener('change', updateUI);
+    estadoEl.addEventListener('input', updateUI);
     document.querySelectorAll('input[name="metodo_pago"]').forEach(r => r.addEventListener('change', updateUI));
     optPaypal.addEventListener('click', () => { optPaypal.querySelector('input').checked = true; updateUI(); });
     optZelle.addEventListener('click', () => { optZelle.querySelector('input').checked = true; updateUI(); });
