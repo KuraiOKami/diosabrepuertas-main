@@ -35,6 +35,8 @@
     .dash-actions{display:flex;gap:.75rem;flex-wrap:wrap;align-items:center}
     .btn-sm{padding:.5rem 1rem;border-radius:var(--radius-full);font-family:inherit;font-size:.85rem;font-weight:600;border:none;cursor:pointer}
     .btn-export{background:var(--gold);color:#fff}
+    .btn-refresh{background:transparent;border:1px solid rgba(255,255,255,.3);color:var(--inverse)}
+    .btn-refresh:disabled{opacity:.5;cursor:not-allowed}
     .btn-logout{background:transparent;border:1px solid rgba(255,255,255,.3);color:var(--inverse)}
     .dash-body{padding:1.5rem;flex:1;overflow:auto}
     .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;margin-bottom:1.5rem}
@@ -83,6 +85,7 @@
       </div>
       <div class="dash-actions">
         <button class="btn-sm btn-export" onclick="exportCSV()">Exportar CSV</button>
+        <button class="btn-sm btn-refresh" onclick="loadSubmissions()" id="refresh-btn">↺ Actualizar</button>
         <button class="btn-sm btn-logout" onclick="logout()">Cerrar sesión</button>
       </div>
     </div>
@@ -160,6 +163,9 @@
 
     async function loadSubmissions(){
       const banner = document.getElementById('demo-banner');
+      const refreshBtn = document.getElementById('refresh-btn');
+      if (refreshBtn) { refreshBtn.disabled = true; refreshBtn.textContent = '↺ Cargando…'; }
+
       try {
         const res = await fetch('/.netlify/functions/get-submissions', {
           headers: { 'x-admin-token': enteredPassword }
@@ -171,6 +177,14 @@
 
         if (payload.error === 'NOT_CONFIGURED') {
           allRows = DEMO_ROWS;
+          banner.innerHTML = '<strong>Modo demo.</strong> Configura <code>NETLIFY_API_TOKEN</code>, <code>NETLIFY_SITE_ID</code> y <code>ADMIN_SECRET</code> en Netlify → Environment Variables y redespliega.';
+          banner.style.display = 'block';
+        } else if (payload.error === 'FORM_NOT_FOUND') {
+          allRows = [];
+          const found = payload.available_forms?.length
+            ? 'Formularios detectados: <strong>' + payload.available_forms.join(', ') + '</strong>'
+            : 'No se detectó ningún formulario en este sitio.';
+          banner.innerHTML = '<strong>Formulario "preventa" no encontrado.</strong> ' + found + '. Asegúrate de haber desplegado el sitio en Netlify con el formulario activo y de que <code>NETLIFY_SITE_ID</code> sea el correcto.';
           banner.style.display = 'block';
         } else if (payload.error) {
           throw new Error(payload.message || payload.error);
@@ -178,10 +192,13 @@
           allRows = payload;
           banner.style.display = 'none';
         }
-      } catch {
+      } catch (err) {
         allRows = DEMO_ROWS;
+        banner.innerHTML = '<strong>Modo demo</strong> — no se pudo conectar con la función. Verifica que las variables de entorno estén configuradas en Netlify y que el sitio haya sido redesplegado. (' + (err.message || 'Error de red') + ')';
         banner.style.display = 'block';
       }
+
+      if (refreshBtn) { refreshBtn.disabled = false; refreshBtn.textContent = '↺ Actualizar'; }
       renderStats();
       renderTable();
     }

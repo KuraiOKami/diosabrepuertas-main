@@ -26,7 +26,7 @@ exports.handler = async (event) => {
   }
 
   try {
-    // Locate the preventa form
+    // List all forms on this site
     const formsRes = await fetch(
       `https://api.netlify.com/api/v1/sites/${siteId}/forms`,
       { headers: { Authorization: `Bearer ${apiToken}` } }
@@ -34,10 +34,21 @@ exports.handler = async (event) => {
     if (!formsRes.ok) throw new Error(`Forms API returned ${formsRes.status}`);
 
     const forms = await formsRes.json();
-    const form = forms.find(f => f.name === 'preventa');
+
+    // Case-insensitive match on the form name
+    const form = forms.find(f => (f.name || '').toLowerCase() === 'preventa');
 
     if (!form) {
-      return { statusCode: 200, headers, body: JSON.stringify([]) };
+      // Return the list of detected form names so the admin can diagnose mismatches
+      const formNames = forms.map(f => f.name);
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({
+          error: 'FORM_NOT_FOUND',
+          available_forms: formNames
+        })
+      };
     }
 
     // Fetch up to 200 most recent submissions

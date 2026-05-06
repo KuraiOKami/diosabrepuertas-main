@@ -552,12 +552,16 @@
     form.addEventListener('submit', async function(e) {
       e.preventDefault();
       const data = new FormData(form);
+      const btn = document.getElementById('submit-btn');
+      btn.disabled = true;
+      btn.textContent = 'Enviando…';
       try {
-        await fetch('/', {
+        const res = await fetch('/', {
           method: 'POST',
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
           body: new URLSearchParams(data).toString()
         });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
         form.style.display = 'none';
         const method = data.get('metodo_pago') || 'paypal';
         const total = getGrandTotal().toFixed(2);
@@ -573,7 +577,9 @@
           setTimeout(() => { window.open(PAYPAL_LINK + '/' + total, '_blank'); }, 1500);
         }
       } catch(err) {
-        alert('Hubo un error. Por favor intenta de nuevo.');
+        btn.disabled = false;
+        updateUI();
+        alert('Hubo un error al enviar tu reserva. Por favor intenta de nuevo.\n\n(' + err.message + ')');
       }
     });
   </script>
