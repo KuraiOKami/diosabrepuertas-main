@@ -87,6 +87,12 @@
       </div>
     </div>
     <div class="dash-body">
+      <div id="demo-banner" style="display:none;background:#fff8e1;border:1px solid #f0c040;border-radius:.75rem;padding:.85rem 1.25rem;font-size:.82rem;color:#7a5200;margin-bottom:1rem;line-height:1.6">
+        <strong>Modo demo — datos de ejemplo.</strong> Para ver pedidos reales configura estas variables en <em>Netlify → Site Settings → Environment Variables</em>:<br>
+        <code style="background:rgba(0,0,0,.06);padding:.1rem .35rem;border-radius:.25rem">NETLIFY_API_TOKEN</code> &nbsp;
+        <code style="background:rgba(0,0,0,.06);padding:.1rem .35rem;border-radius:.25rem">NETLIFY_SITE_ID</code> &nbsp;
+        <code style="background:rgba(0,0,0,.06);padding:.1rem .35rem;border-radius:.25rem">ADMIN_SECRET</code> (igual a la contraseña de admin)
+      </div>
       <div class="stats" id="stats"></div>
       <input class="search-bar" type="search" id="search" placeholder="Buscar por nombre, correo, ciudad o país…" oninput="renderTable()" />
       <div class="table-wrap" id="table-wrap"></div>
@@ -98,8 +104,8 @@
   </div>
 
   <script>
-    // ⚠️ Change this password before going live!
     const ADMIN_PASSWORD = 'jennifer2025';
+    let enteredPassword = '';
 
     // ============================================================
     // AUTH
@@ -109,6 +115,7 @@
       const val = document.getElementById('pwd').value;
       if(val === ADMIN_PASSWORD){
         authed = true;
+        enteredPassword = val;
         document.getElementById('gate').style.display = 'none';
         document.getElementById('dashboard').style.display = 'flex';
         loadSubmissions();
@@ -120,40 +127,61 @@
     function logout(){ authed=false; location.reload(); }
 
     // ============================================================
-    // LOAD SUBMISSIONS via Netlify Forms API
+    // LOAD SUBMISSIONS — calls Netlify Function, falls back to demo
     // ============================================================
-    // NOTE: For a static site the simplest approach is to read directly from the
-    // Netlify dashboard, or use Netlify Identity + Functions for a real API call.
-    // ---- DEMO DATA so owner can see the layout immediately ----
+    const DEMO_ROWS = [
+      {
+        created_at: new Date().toISOString(),
+        data: {
+          nombre: 'María González', email: 'maria@email.com', telefono: '+1 787 555 0101',
+          pais: 'Puerto Rico', direccion: 'Calle Luna 45', ciudad: 'San Juan',
+          estado: 'PR', codigo_postal: '00901', cantidad: '1', metodo_pago: 'paypal'
+        }
+      },
+      {
+        created_at: new Date().toISOString(),
+        data: {
+          nombre: 'Ana Torres', email: 'ana@email.com', telefono: '+1 939 555 0202',
+          pais: 'Estados Unidos', direccion: '123 Main St Apt 4B', ciudad: 'Orlando',
+          estado: 'FL', codigo_postal: '32801', cantidad: '2', metodo_pago: 'zelle'
+        }
+      },
+      {
+        created_at: new Date().toISOString(),
+        data: {
+          nombre: 'Carmen Díaz', email: 'carmen@email.com', telefono: '',
+          pais: 'México', direccion: 'Av. Reforma 200', ciudad: 'Ciudad de México',
+          estado: 'CDMX', codigo_postal: '06600', cantidad: '1', metodo_pago: 'paypal'
+        }
+      },
+    ];
+
     let allRows = [];
 
     async function loadSubmissions(){
-      allRows = [
-        {
-          created_at: new Date().toISOString(),
-          data: {
-            nombre: 'María González', email: 'maria@email.com', telefono: '+1 787 555 0101',
-            pais: 'Puerto Rico', direccion: 'Calle Luna 45', ciudad: 'San Juan',
-            estado: 'PR', codigo_postal: '00901', cantidad: '1', metodo_pago: 'paypal'
-          }
-        },
-        {
-          created_at: new Date().toISOString(),
-          data: {
-            nombre: 'Ana Torres', email: 'ana@email.com', telefono: '+1 939 555 0202',
-            pais: 'Estados Unidos', direccion: '123 Main St Apt 4B', ciudad: 'Orlando',
-            estado: 'FL', codigo_postal: '32801', cantidad: '2', metodo_pago: 'zelle'
-          }
-        },
-        {
-          created_at: new Date().toISOString(),
-          data: {
-            nombre: 'Carmen Díaz', email: 'carmen@email.com', telefono: '',
-            pais: 'México', direccion: 'Av. Reforma 200', ciudad: 'Ciudad de México',
-            estado: 'CDMX', codigo_postal: '06600', cantidad: '1', metodo_pago: 'paypal'
-          }
-        },
-      ];
+      const banner = document.getElementById('demo-banner');
+      try {
+        const res = await fetch('/.netlify/functions/get-submissions', {
+          headers: { 'x-admin-token': enteredPassword }
+        });
+
+        if (res.status === 401) { logout(); return; }
+
+        const payload = await res.json();
+
+        if (payload.error === 'NOT_CONFIGURED') {
+          allRows = DEMO_ROWS;
+          banner.style.display = 'block';
+        } else if (payload.error) {
+          throw new Error(payload.message || payload.error);
+        } else {
+          allRows = payload;
+          banner.style.display = 'none';
+        }
+      } catch {
+        allRows = DEMO_ROWS;
+        banner.style.display = 'block';
+      }
       renderStats();
       renderTable();
     }

@@ -308,9 +308,9 @@
                 <span>Envío</span>
                 <span id="shipping-price" style="color:var(--muted)">— Selecciona país</span>
               </div>
-              <div class="price-row price-row-note">
-                <span>Impuestos (EE.UU.)</span>
-                <span>Se calculan al pagar</span>
+              <div class="price-row" id="tax-row">
+                <span id="tax-label">Impuestos</span>
+                <span id="tax-price" style="color:var(--muted)">—</span>
               </div>
               <div class="price-row price-row-total">
                 <span>Total estimado</span>
@@ -447,12 +447,11 @@
     const PAYPAL_LINK = 'https://www.paypal.com/paypalme/Dioslovahacer07';
     const ZELLE_ID = '(407) 954-0991';
 
-    // Presale pricing: 1=$14.99, 2=$25.00 bundle, 3=$44.97, 4+=$59.96
     const BOOK_PRICES = { '1': 14.99, '2': 25.00, '3': 44.97, '4+': 59.96 };
-    // Shipping: $8 US/PR, $15 everywhere else
-    const SHIPPING_US = 8;
-    const SHIPPING_INTL = 15;
+    const SHIPPING_US = 8, SHIPPING_INTL = 15;
     const US_COUNTRIES = ['Puerto Rico', 'Estados Unidos'];
+    // Tax rates by country (applied to book price only)
+    const TAX_RATES = { 'Puerto Rico': 0.115 }; // 11.5% IVU
 
     const form = document.getElementById('preorder-form');
     const cantidadEl = document.getElementById('cantidad');
@@ -462,14 +461,20 @@
     const optPaypal = document.getElementById('opt-paypal');
     const optZelle = document.getElementById('opt-zelle');
 
-    function getBookPrice() {
-      return BOOK_PRICES[cantidadEl.value] ?? 14.99;
-    }
+    function getBookPrice() { return BOOK_PRICES[cantidadEl.value] ?? 14.99; }
 
     function getShipping() {
-      const country = paisEl.value;
-      if (!country) return null;
-      return US_COUNTRIES.includes(country) ? SHIPPING_US : SHIPPING_INTL;
+      if (!paisEl.value) return null;
+      return US_COUNTRIES.includes(paisEl.value) ? SHIPPING_US : SHIPPING_INTL;
+    }
+
+    function getTax() {
+      const rate = TAX_RATES[paisEl.value] ?? 0;
+      return getBookPrice() * rate;
+    }
+
+    function getGrandTotal() {
+      return getBookPrice() + (getShipping() ?? 0) + getTax();
     }
 
     function getMethod() {
@@ -479,21 +484,51 @@
     function updateUI() {
       const books = getBookPrice();
       const ship = getShipping();
+      const tax = getTax();
+      const country = paisEl.value;
       const qty = cantidadEl.value || '1';
 
       document.getElementById('qty-label').textContent = qty;
       document.getElementById('books-price').textContent = '$' + books.toFixed(2);
 
+      // Shipping
       if (ship === null) {
         document.getElementById('shipping-price').textContent = '— Selecciona país';
-        document.getElementById('shipping-price').style.color = 'var(--muted)';
-        document.getElementById('total-price').textContent = '$' + books.toFixed(2) + '+';
+        document.getElementById('shipping-price').style.cssText = 'color:var(--muted)';
       } else {
         document.getElementById('shipping-price').textContent = '$' + ship.toFixed(2);
-        document.getElementById('shipping-price').style.color = 'var(--text)';
-        document.getElementById('total-price').textContent = '$' + (books + ship).toFixed(2);
+        document.getElementById('shipping-price').style.cssText = 'color:var(--text)';
       }
 
+      // Tax
+      const taxEl = document.getElementById('tax-price');
+      const taxLabel = document.getElementById('tax-label');
+      if (!country) {
+        taxLabel.textContent = 'Impuestos';
+        taxEl.textContent = '—';
+        taxEl.style.cssText = 'color:var(--muted)';
+      } else if (TAX_RATES[country]) {
+        taxLabel.textContent = `IVU ${(TAX_RATES[country] * 100).toFixed(1)}%`;
+        taxEl.textContent = '$' + tax.toFixed(2);
+        taxEl.style.cssText = 'color:var(--text)';
+      } else if (country === 'Estados Unidos') {
+        taxLabel.textContent = 'Impuestos';
+        taxEl.textContent = 'Varía por estado';
+        taxEl.style.cssText = 'color:var(--muted);font-style:italic;font-size:.78rem';
+      } else {
+        taxLabel.textContent = 'Impuestos';
+        taxEl.textContent = 'No aplica';
+        taxEl.style.cssText = 'color:var(--muted)';
+      }
+
+      // Grand total
+      if (ship === null) {
+        document.getElementById('total-price').textContent = '$' + (books + tax).toFixed(2) + '+';
+      } else {
+        document.getElementById('total-price').textContent = '$' + getGrandTotal().toFixed(2);
+      }
+
+      // Payment method button
       const method = getMethod();
       if (method === 'zelle') {
         submitBtn.textContent = 'Reservar y pagar con Zelle ⚡';
@@ -525,9 +560,7 @@
         });
         form.style.display = 'none';
         const method = data.get('metodo_pago') || 'paypal';
-        const books = getBookPrice();
-        const ship = getShipping() ?? 0;
-        const total = (books + ship).toFixed(2);
+        const total = getGrandTotal().toFixed(2);
 
         if (method === 'zelle') {
           document.getElementById('zelle-contact').textContent = ZELLE_ID;
