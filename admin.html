@@ -158,10 +158,17 @@
       renderTable();
     }
 
+    const BOOK_PRICES = { '1': 14.99, '2': 25.00, '3': 44.97, '4+': 59.96 };
+    const SHIP_US = 8, SHIP_INTL = 15;
+    const US_COUNTRIES = ['Puerto Rico', 'Estados Unidos'];
+    function bookPrice(qty){ return BOOK_PRICES[qty] ?? 14.99; }
+    function shipCost(country){ return US_COUNTRIES.includes(country) ? SHIP_US : SHIP_INTL; }
+    function orderTotal(d){ return bookPrice(d.cantidad) + shipCost(d.pais); }
+
     function renderStats(){
       const total = allRows.length;
-      const totalBooks = allRows.reduce((s,r)=>{ const n=parseInt(r.data.cantidad)||1; return s+n; },0);
-      const revenue = (totalBooks * 24.99).toFixed(2);
+      const totalBooks = allRows.reduce((s,r)=>{ const q=r.data.cantidad; return s+(q==='4+'?4:parseInt(q)||1); },0);
+      const revenue = allRows.reduce((s,r)=>s+orderTotal(r.data), 0).toFixed(2);
       const paypalCount = allRows.filter(r => r.data.metodo_pago === 'paypal').length;
       const zelleCount = allRows.filter(r => r.data.metodo_pago === 'zelle').length;
       document.getElementById('stats').innerHTML = `
@@ -198,14 +205,16 @@
           <th>Dirección de entrega</th>
           <th>País</th>
           <th>Libros</th>
+          <th>Libros $</th>
+          <th>Envío</th>
           <th>Total</th>
           <th>Pago</th>
           <th>Fecha</th>
         </tr></thead>
         <tbody>${rows.map((r,i)=>{
           const d = r.data;
-          const n = parseInt(d.cantidad) || 1;
-          const tot = (n * 24.99).toFixed(2);
+          const n = d.cantidad === '4+' ? 4 : parseInt(d.cantidad) || 1;
+          const tot = orderTotal(d).toFixed(2);
           const date = new Date(r.created_at).toLocaleDateString('es-PR', {day:'2-digit', month:'short', year:'numeric'});
           const fullAddress = [d.direccion, d.ciudad, d.estado, d.codigo_postal].filter(Boolean).join(', ');
           const metodoBadge = d.metodo_pago === 'zelle'
@@ -219,6 +228,8 @@
             <td class="address-cell">${esc(fullAddress||'—')}</td>
             <td>${esc(d.pais||'—')}</td>
             <td>${n}</td>
+            <td>$${bookPrice(d.cantidad).toFixed(2)}</td>
+            <td>$${shipCost(d.pais).toFixed(2)}</td>
             <td>$${tot}</td>
             <td>${metodoBadge}</td>
             <td>${date}</td>
@@ -233,11 +244,11 @@
       const headers = ['Nombre','Correo','Teléfono','Dirección','Ciudad','Estado','Código Postal','País','Libros','Total','Método de Pago','Fecha'];
       const rows = allRows.map(r=>{
         const d = r.data;
-        const n = parseInt(d.cantidad) || 1;
+        const n = d.cantidad === '4+' ? 4 : parseInt(d.cantidad) || 1;
         return [
           d.nombre, d.email, d.telefono,
           d.direccion, d.ciudad, d.estado, d.codigo_postal,
-          d.pais, n, (n * 24.99).toFixed(2),
+          d.pais, n, orderTotal(d).toFixed(2),
           d.metodo_pago || 'paypal',
           new Date(r.created_at).toLocaleDateString('es-PR')
         ].map(v => `"${String(v||'').replace(/"/g,'""')}"`).join(',');

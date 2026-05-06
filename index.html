@@ -73,9 +73,13 @@
     input:focus,select:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(179,132,51,.15)}
     input::placeholder{color:#b8a99a}
     .qty-note{font-size:var(--text-xs);color:var(--muted);margin-top:var(--space-1)}
-    .price-block{display:flex;align-items:baseline;gap:var(--space-2);margin:var(--space-5) 0 var(--space-4)}
-    .price-amount{font-size:clamp(2rem,4vw,2.8rem);font-weight:700;color:var(--gold-dark)}
-    .price-label{color:var(--muted);font-size:var(--text-sm)}
+    .price-breakdown{border:1px solid var(--border);border-radius:var(--radius-md);overflow:hidden;margin:var(--space-5) 0 var(--space-4);background:#fff}
+    .price-row{display:flex;justify-content:space-between;align-items:center;padding:.65rem 1rem;font-size:var(--text-sm);border-bottom:1px solid var(--border)}
+    .price-row:last-child{border-bottom:none}
+    .price-row-note{color:var(--muted);font-size:var(--text-xs)!important;font-style:italic}
+    .price-row-total{background:rgba(179,132,51,.07);font-weight:700}
+    .price-row-total span:last-child{color:var(--gold-dark);font-size:1.1rem}
+    .price-presale-note{text-align:center;font-size:var(--text-xs);color:var(--gold-dark);font-weight:600;margin-bottom:var(--space-4);background:rgba(179,132,51,.08);border:1px solid rgba(179,132,51,.2);border-radius:var(--radius-md);padding:.5rem 1rem}
 
     /* PAYMENT OPTIONS */
     .payment-options{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-3);margin-bottom:var(--space-4)}
@@ -130,6 +134,8 @@
     .about-copy p{color:rgba(255,250,247,.72);font-size:var(--text-sm);line-height:1.7;margin-bottom:var(--space-4);max-width:60ch}
     .about-copy p:last-child{margin-bottom:0}
     .about-divider{width:2.5rem;height:2px;background:var(--gold);border:none;margin:var(--space-4) 0}
+    .about-callout{font-family:var(--font-display)!important;font-size:clamp(1.1rem,2vw,1.4rem)!important;color:var(--gold)!important;font-style:italic;line-height:1.4!important}
+    .about-closing{color:rgba(255,250,247,.85)!important}
 
     /* FOOTER */
     footer{padding:var(--space-8) 0 var(--space-6);border-top:1px solid var(--border);margin-top:var(--space-10)}
@@ -161,10 +167,10 @@
         <span class="eyebrow">Preventa por tiempo limitado</span>
         <h1 id="titulo">Mami,<br>abrázame</h1>
         <p><em>Mi fe venció la tormenta</em> — por <strong>Jennifer Robles</strong></p>
-        <p>Asegura tu ejemplar firmado con precio especial antes del lanzamiento. Solo disponible <strong>este sábado y domingo</strong>.</p>
+        <p>Asegura tu ejemplar con precio especial de preventa. <strong>2 libros por solo $25</strong> — precio regular vuelve después del fin de semana.</p>
         <div class="date-pill" aria-label="Fechas de preventa">
           <span>📅</span>
-          <span>Sábado 9 y Domingo 10 de mayo</span>
+          <span>Sábado 9 y Domingo 10 de mayo, 2026</span>
           <span>·</span>
           <span>Tiempo limitado</span>
         </div>
@@ -240,19 +246,34 @@
               <div>
                 <label for="cantidad">Cantidad de libros *</label>
                 <select id="cantidad" name="cantidad" required>
-                  <option value="1">1 libro</option>
-                  <option value="2">2 libros</option>
-                  <option value="3">3 libros</option>
-                  <option value="4+">4 o más</option>
+                  <option value="1">1 libro — $14.99</option>
+                  <option value="2">2 libros — $25.00 ¡Ahorra $4.98!</option>
+                  <option value="3">3 libros — $44.97</option>
+                  <option value="4+">4 o más — $14.99 c/u</option>
                 </select>
-                <p class="qty-note">Cada copia incluye firma y bolígrafo exclusivo.</p>
+                <p class="qty-note">Las primeras 25 órdenes incluyen firma y bolígrafo exclusivo.</p>
               </div>
             </div>
 
-            <!-- Price -->
-            <div class="price-block">
-              <span class="price-amount" id="price-display">$24.99</span>
-              <span class="price-label">precio especial de preventa</span>
+            <!-- Price Breakdown -->
+            <p class="price-presale-note">Precio especial preventa · válido solo 9–10 mayo 2026</p>
+            <div class="price-breakdown" role="table" aria-label="Desglose de precios">
+              <div class="price-row">
+                <span>Libros (<span id="qty-label">1</span>)</span>
+                <span id="books-price">$14.99</span>
+              </div>
+              <div class="price-row">
+                <span>Envío</span>
+                <span id="shipping-price" style="color:var(--muted)">— Selecciona país</span>
+              </div>
+              <div class="price-row price-row-note">
+                <span>Impuestos (EE.UU.)</span>
+                <span>Se calculan al pagar</span>
+              </div>
+              <div class="price-row price-row-total">
+                <span>Total estimado</span>
+                <span id="total-price">$14.99+</span>
+              </div>
             </div>
 
             <!-- Payment Method -->
@@ -311,7 +332,7 @@
       <article class="detail-card">
         <div class="icon" aria-hidden="true">📦</div>
         <h3>Envío adicional</h3>
-        <p>El costo de envío se calcula según tu dirección y se coordina al confirmar tu pedido.</p>
+        <p>$8 dentro de EE.UU. y Puerto Rico · $15 Latinoamérica. Se suma automáticamente al total.</p>
       </article>
       <article class="detail-card">
         <div class="icon" aria-hidden="true">✒️</div>
@@ -321,7 +342,7 @@
       <article class="detail-card">
         <div class="icon" aria-hidden="true">⏳</div>
         <h3>Tiempo limitado</h3>
-        <p>El enlace de preventa solo estará disponible sábado 9 y domingo 10 de mayo.</p>
+        <p>Precio especial válido solo el 9 y 10 de mayo de 2026. Después vuelve al precio regular.</p>
       </article>
       <article class="detail-card">
         <div class="icon" aria-hidden="true">🙏</div>
@@ -346,9 +367,12 @@
           <span class="eyebrow">Sobre la autora</span>
           <h2 id="sobre-autora">Jennifer Robles</h2>
           <hr class="about-divider" />
-          <p>Jennifer Robles es una mujer de fe cuya historia de vida es testimonio vivo del poder transformador de Dios en medio de la tormenta. Con valentía y transparencia, ha decidido compartir lo que vivió para que ninguna persona tenga que atravesar sola sus momentos más oscuros.</p>
-          <p>En <em>Mami, abrázame</em>, Jennifer nos lleva de la mano por un camino marcado por el dolor, la duda y la restauración, mostrando cómo su fe no solo la sostuvo, sino que la levantó. Su voz es cercana, real y llena del amor de una madre que encontró en Dios su mayor fortaleza.</p>
-          <p>Este libro es un abrazo para el alma — para quien lo necesite.</p>
+          <p>Jennifer Robles es una mujer de fe cuya vida ha sido moldeada en los procesos, sostenida en la prueba y restaurada por el poder de Dios. Su historia no es perfecta, pero sí es real: una historia donde el dolor, la incertidumbre y las batallas como madre se convirtieron en el escenario donde Dios mostró Su fidelidad.</p>
+          <p>Con valentía, transparencia y un corazón rendido, Jennifer abre su vida para compartir un mensaje que nace desde lo más profundo: ninguna madre está sola en su lucha. Su testimonio es una voz de esperanza para aquellas que, en medio de la desesperación, siguen creyendo por el propósito de Dios en la vida de sus hijos.</p>
+          <p>En <em>Mami, abrázame</em>, no encontrarás solo palabras, sino dirección, confrontación y consuelo. A través de cada página, Jennifer te guía en un camino donde aprenderás a levantarte, a pelear con las armas correctas y a confiar en que Dios sigue obrando, aun cuando no lo ves.</p>
+          <p class="about-callout">Este libro no es solo un mensaje…<br>es un llamado.</p>
+          <p>Un llamado a las madres que no se rinden.<br>Un llamado a las que siguen orando en silencio.<br>Un llamado a las que necesitan recordar que en Dios hay esperanza.</p>
+          <p class="about-closing">Este libro es un abrazo… pero no cualquier abrazo.<br><em>Es el abrazo de una madre que decide creer hasta el final.</em></p>
         </div>
       </div>
     </section>
@@ -356,33 +380,38 @@
 
   <footer>
     <div class="container footer-inner">
-      <span>© 2025 Jennifer Robles · Todos los derechos reservados</span>
+      <span>© 2026 Jennifer Robles · Todos los derechos reservados</span>
       <span>Pagos seguros a través de PayPal o Zelle</span>
     </div>
   </footer>
 
   <script>
-    // ← Replace with your real PayPal.me link
-    const PAYPAL_LINK = 'https://www.paypal.com/paypalme/TUUSUARIO';
+    const PAYPAL_LINK = 'https://www.paypal.com/paypalme/Dioslovahacer07';
+    const ZELLE_ID = '(407) 954-0991';
 
-    // ← Replace with your Zelle phone number or email
-    const ZELLE_ID = 'ZELLE_NUMERO_O_CORREO';
+    // Presale pricing: 1=$14.99, 2=$25.00 bundle, 3=$44.97, 4+=$59.96
+    const BOOK_PRICES = { '1': 14.99, '2': 25.00, '3': 44.97, '4+': 59.96 };
+    // Shipping: $8 US/PR, $15 everywhere else
+    const SHIPPING_US = 8;
+    const SHIPPING_INTL = 15;
+    const US_COUNTRIES = ['Puerto Rico', 'Estados Unidos'];
 
     const form = document.getElementById('preorder-form');
     const cantidadEl = document.getElementById('cantidad');
-    const priceDisplay = document.getElementById('price-display');
+    const paisEl = document.getElementById('pais');
     const submitBtn = document.getElementById('submit-btn');
     const paymentHint = document.getElementById('payment-hint');
     const optPaypal = document.getElementById('opt-paypal');
     const optZelle = document.getElementById('opt-zelle');
 
-    function getQty() {
-      const v = cantidadEl.value;
-      return v === '4+' ? 4 : parseInt(v) || 1;
+    function getBookPrice() {
+      return BOOK_PRICES[cantidadEl.value] ?? 14.99;
     }
 
-    function getTotal() {
-      return (getQty() * 24.99).toFixed(2);
+    function getShipping() {
+      const country = paisEl.value;
+      if (!country) return null;
+      return US_COUNTRIES.includes(country) ? SHIPPING_US : SHIPPING_INTL;
     }
 
     function getMethod() {
@@ -390,8 +419,23 @@
     }
 
     function updateUI() {
-      const total = getTotal();
-      priceDisplay.textContent = '$' + total;
+      const books = getBookPrice();
+      const ship = getShipping();
+      const qty = cantidadEl.value || '1';
+
+      document.getElementById('qty-label').textContent = qty;
+      document.getElementById('books-price').textContent = '$' + books.toFixed(2);
+
+      if (ship === null) {
+        document.getElementById('shipping-price').textContent = '— Selecciona país';
+        document.getElementById('shipping-price').style.color = 'var(--muted)';
+        document.getElementById('total-price').textContent = '$' + books.toFixed(2) + '+';
+      } else {
+        document.getElementById('shipping-price').textContent = '$' + ship.toFixed(2);
+        document.getElementById('shipping-price').style.color = 'var(--text)';
+        document.getElementById('total-price').textContent = '$' + (books + ship).toFixed(2);
+      }
+
       const method = getMethod();
       if (method === 'zelle') {
         submitBtn.textContent = 'Reservar y pagar con Zelle ⚡';
@@ -407,6 +451,7 @@
     }
 
     cantidadEl.addEventListener('change', updateUI);
+    paisEl.addEventListener('change', updateUI);
     document.querySelectorAll('input[name="metodo_pago"]').forEach(r => r.addEventListener('change', updateUI));
     optPaypal.addEventListener('click', () => { optPaypal.querySelector('input').checked = true; updateUI(); });
     optZelle.addEventListener('click', () => { optZelle.querySelector('input').checked = true; updateUI(); });
@@ -422,18 +467,18 @@
         });
         form.style.display = 'none';
         const method = data.get('metodo_pago') || 'paypal';
-        const total = getTotal();
+        const books = getBookPrice();
+        const ship = getShipping() ?? 0;
+        const total = (books + ship).toFixed(2);
 
         if (method === 'zelle') {
-          const zelleSuccess = document.getElementById('success-zelle');
           document.getElementById('zelle-contact').textContent = ZELLE_ID;
           document.getElementById('zelle-amount').textContent = '$' + total;
-          zelleSuccess.style.display = 'block';
+          document.getElementById('success-zelle').style.display = 'block';
         } else {
-          const paypalSuccess = document.getElementById('success-paypal');
           const link = document.getElementById('paypal-link');
           link.href = PAYPAL_LINK + '/' + total;
-          paypalSuccess.style.display = 'block';
+          document.getElementById('success-paypal').style.display = 'block';
           setTimeout(() => { window.open(PAYPAL_LINK + '/' + total, '_blank'); }, 1500);
         }
       } catch(err) {
