@@ -198,16 +198,10 @@
 
       <!-- LEFT: copy + form -->
       <div class="hero-copy">
-        <span class="eyebrow">Preventa por tiempo limitado</span>
+        <span class="eyebrow">Disponible ahora</span>
         <h1 id="titulo">Mami,<br>abrázame</h1>
         <p><em>Mi fe venció la tormenta</em> — por <strong>Jennifer Robles</strong></p>
-        <p>Asegura tu ejemplar con precio especial de preventa. <strong>2 libros por solo $25</strong> — precio regular vuelve después del fin de semana.</p>
-        <div class="date-pill" aria-label="Fechas de preventa">
-          <span>📅</span>
-          <span>Sábado 9 y Domingo 10 de mayo, 2026</span>
-          <span>·</span>
-          <span>Tiempo limitado</span>
-        </div>
+        <p>Ordena tu ejemplar hoy. <strong>$15 por libro</strong> — envío disponible a EE.UU., Puerto Rico y Latinoamérica.</p>
 
         <!-- PREORDER FORM -->
         <div class="order-card" id="preordenar">
@@ -288,21 +282,20 @@
               <div>
                 <label for="cantidad">Cantidad de libros *</label>
                 <select id="cantidad" name="cantidad" required>
-                  <option value="1">1 libro — $14.99</option>
-                  <option value="2">2 libros — $25.00 ¡Ahorra $4.98!</option>
-                  <option value="3">3 libros — $44.97</option>
-                  <option value="4+">4 o más — $14.99 c/u</option>
+                  <option value="1">1 libro — $15.00</option>
+                  <option value="2">2 libros — $30.00</option>
+                  <option value="3">3 libros — $45.00</option>
+                  <option value="4+">4 o más — $15.00 c/u</option>
                 </select>
                 <p class="qty-note">Las primeras 25 órdenes incluyen firma y bolígrafo exclusivo.</p>
               </div>
             </div>
 
             <!-- Price Breakdown -->
-            <p class="price-presale-note">Precio especial preventa · válido solo 9–10 mayo 2026</p>
-            <div class="price-breakdown" role="table" aria-label="Desglose de precios">
+<div class="price-breakdown" role="table" aria-label="Desglose de precios">
               <div class="price-row">
                 <span>Libros (<span id="qty-label">1</span>)</span>
-                <span id="books-price">$14.99</span>
+                <span id="books-price">$15.00</span>
               </div>
               <div class="price-row">
                 <span>Envío</span>
@@ -314,7 +307,7 @@
               </div>
               <div class="price-row price-row-total">
                 <span>Total estimado</span>
-                <span id="total-price">$14.99+</span>
+                <span id="total-price">$15.00+</span>
               </div>
             </div>
 
@@ -398,9 +391,9 @@
         <p>Tu copia viene firmada a mano por <strong>Jennifer Robles</strong> con bolígrafo exclusivo del libro.</p>
       </article>
       <article class="detail-card">
-        <div class="icon" aria-hidden="true">⏳</div>
-        <h3>Tiempo limitado</h3>
-        <p>Precio especial válido solo el 9 y 10 de mayo de 2026. Después vuelve al precio regular.</p>
+        <div class="icon" aria-hidden="true">📦</div>
+        <h3>Envío rápido</h3>
+        <p>Procesamos y enviamos tu orden a la mayor brevedad posible a EE.UU., Puerto Rico y Latinoamérica.</p>
       </article>
       <article class="detail-card">
         <div class="icon" aria-hidden="true">🙏</div>
@@ -447,7 +440,7 @@
     const PAYPAL_LINK = 'https://www.paypal.com/paypalme/Dioslovahacer07';
     const ZELLE_ID = '(407) 954-0991';
 
-    const BOOK_PRICES = { '1': 14.99, '2': 25.00, '3': 44.97, '4+': 59.96 };
+    const BOOK_PRICES = { '1': 15.00, '2': 30.00, '3': 45.00, '4+': 60.00 };
     const SHIPPING_US = 8, SHIPPING_INTL = 15;
     const US_COUNTRIES = ['Puerto Rico', 'Estados Unidos'];
 
@@ -476,7 +469,7 @@
     const optPaypal = document.getElementById('opt-paypal');
     const optZelle = document.getElementById('opt-zelle');
 
-    function getBookPrice() { return BOOK_PRICES[cantidadEl.value] ?? 14.99; }
+    function getBookPrice() { return BOOK_PRICES[cantidadEl.value] ?? 15.00; }
 
     function getShipping() {
       if (!paisEl.value) return null;
